@@ -1,0 +1,33 @@
+
+FROM busybox:stable
+
+ARG BALENA_ARCH=%%BALENA_ARCH%%
+
+WORKDIR /usr/src
+
+COPY download-entware.sh ./
+
+# Download and install opkg from Entware repository
+RUN chmod u+x download-entware.sh &&\
+    ./download-entware.sh $BALENA_ARCH &&\
+    rm -rf download-entware.sh
+
+ENV PATH=$PATH:/opt/bin/:/opt/sbin
+
+# Install lighttpd
+RUN opkg update &&\
+    opkg install lighttpd
+
+WORKDIR /usr/src/app
+
+COPY start.sh ./
+
+COPY lighttpd.conf ./
+
+RUN mkdir -p /var/www/servers/test/pages/
+
+COPY index.html /var/www/servers/test/pages/
+
+RUN mkdir /var/tmp
+
+CMD ["sh", "start.sh"]
